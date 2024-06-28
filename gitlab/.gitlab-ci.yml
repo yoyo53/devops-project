@@ -7,6 +7,10 @@ before_script:
   - echo "Install dependencies..."
   - npm install
 
+after_script:
+  - echo "Notify the Discord channel..."
+  - python3 /discord-bot.py "${CI_JOB_NAME} step finished with status ${CI_JOB_STATUS}"
+
 build:
   stage: build
   script:
