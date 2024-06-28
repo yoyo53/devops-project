@@ -1,0 +1,35 @@
+stages:
+  - build
+  - test
+  - deploy
+
+before_script:
+  - echo "Install dependencies..."
+  - npm install
+
+build:
+  stage: build
+  script:
+    - echo "Building the application..."
+    - npm run build
+  artifacts:
+    paths:
+      - build/
+
+test:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - npm test
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploying the application..."
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -t rsa web-server >> ~/.ssh/known_hosts
+    - ansible-playbook -i inventory.ini -u root deploy-playbook.yaml
+
+  only:
+    - main

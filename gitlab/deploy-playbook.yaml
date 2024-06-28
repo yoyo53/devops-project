@@ -1,0 +1,7 @@
+- name: Deploy built files to production server
+  hosts: production
+  tasks:
+    - name: Copy files to production server
+      copy:
+        src: build/
+        dest: /usr/share/nginx/html
