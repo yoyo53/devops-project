@@ -1,7 +1,7 @@
 FROM gitlab/gitlab-ee:latest
 
-RUN mkdir -p /app/tp1
-WORKDIR /app/tp1
+RUN mkdir -p /app/project
+WORKDIR /app/project
 
 RUN git clone https://github.com/facebook/create-react-app.git .
 ADD .gitlab-ci.yml .
