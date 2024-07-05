@@ -2,17 +2,20 @@ stages:
   - build
   - test
   - deploy
+  - post-deploy
 
-before_script:
+.install:
+  before_script:
   - echo "Install dependencies..."
   - npm install
 
 after_script:
   - echo "Notify the Discord channel..."
-  - python3 /discord-bot.py "${CI_JOB_NAME} step finished with status ${CI_JOB_STATUS}"
+  - python3 /discord-bot.py "CI/CD Pipeline for commit ${CI_COMMIT_SHORT_SHA} on branch ${CI_COMMIT_BRANCH} => ${CI_JOB_NAME} step finished with status ${CI_JOB_STATUS}"
 
 build:
   stage: build
+  extends: .install
   script:
     - echo "Building the application..."
     - npm run build
@@ -22,6 +25,7 @@ build:
 
 test:
   stage: test
+  extends: .install
   script:
     - echo "Running tests..."
     - npm test
@@ -34,6 +38,18 @@ deploy:
     - chmod 600 ~/.ssh/id_rsa
     - ssh-keyscan -t rsa web-server >> ~/.ssh/known_hosts
     - ansible-playbook -i inventory.ini -u root deploy-playbook.yaml
+  only:
+    - main
 
+post-deploy:
+  stage: post-deploy
+  script:
+    - echo "Post-deployment testing..."
+    - content=$(mktemp)
+    - headers=$(mktemp)
+    - curl -o $content -D $headers http://web-server:80
+    - status_code=$(awk '/HTTP/ {print $2}' $headers)
+    - if [ "$status_code" -ne 200 ]; then echo "Invalid status code (HTTP $status_code)"; exit 1; fi
+    - if ! grep -q "<title>React App</title>" $content; then echo "Content not found"; exit 1; fi
   only:
     - main
